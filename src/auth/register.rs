@@ -20,9 +20,9 @@ pub async fn register(data: web::Json<UserAccessRegister>) -> impl Responder {
         }
     };
 
-    let email = data.email.clone().unwrap_or_default();
+    let email = data.email.clone();
     let check_email_query = format!(
-        "SELECT count() as cnt FROM kerjasama.user WHERE email = '{}' FORMAT JSON",
+        "SELECT count() as cnt FROM db_kerjasama.user WHERE email = '{}' FORMAT JSON",
         email.replace("'", "''")
     );
 
@@ -49,9 +49,9 @@ pub async fn register(data: web::Json<UserAccessRegister>) -> impl Responder {
         }
     }
 
-    let username = data.username.clone().unwrap_or_default();
+    let username = data.username.clone();
     let check_username_query = format!(
-        "SELECT count() as cnt FROM kerjasama.user WHERE username = '{}' FORMAT JSON",
+        "SELECT count() as cnt FROM db_kerjasama.user WHERE username = '{}' FORMAT JSON",
         username.replace("'", "''")
     );
 
@@ -78,7 +78,7 @@ pub async fn register(data: web::Json<UserAccessRegister>) -> impl Responder {
         }
     }
 
-    let query_max_id = "SELECT max(id_user) as max_id FROM kerjasama.user FORMAT JSON".to_string();
+    let query_max_id = "SELECT max(id_user) as max_id FROM db_kerjasama.user FORMAT JSON".to_string();
     
     let id_user = match query_ch(query_max_id).await {
         Ok(result) => {
@@ -100,14 +100,14 @@ pub async fn register(data: web::Json<UserAccessRegister>) -> impl Responder {
     };
 
     let query = format!(
-        "INSERT INTO kerjasama.user (id_user, username, email, fullname, password, role, nip, direktorat, jabatan, ttl, status, timestamp) VALUES ({}, '{}', '{}', '{}', '{}', '{}', {}, '{}', '{}', '{}', 1, now())",
+        "INSERT INTO db_kerjasama.user (id_user, username, email, fullname, password, role, nip, direktorat, jabatan, ttl, status, timestamp) VALUES ({}, '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', 1, now())",
         id_user,
         username.replace("'", "''"),
         email.replace("'", "''"),
-        data.full_name.clone().unwrap_or_default().replace("'", "''"),
+        data.full_name.clone().replace("'", "''"),
         bcrypt_password.replace("'", "''"),
-        data.role.replace("'", "''"),
-        data.nip.unwrap_or(0),
+        data.role.clone().unwrap_or_default().replace("'", "''"),
+        data.nip.clone().unwrap_or_default().replace("'", "''"),
         data.direktorat.clone().unwrap_or_default().replace("'", "''"),
         data.jabatan.clone().unwrap_or_default().replace("'", "''"),
         data.ttl.clone().unwrap_or_default().replace("'", "''")

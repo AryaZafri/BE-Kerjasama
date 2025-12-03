@@ -30,3 +30,5 @@ actix-cors = "0.6.2"
 reqwest = { version = "0.11", features = ["cookies", "json", "stream"] }
 serde_merge = "0.1.3"
 lettre = { version = "0.11", default-features = false, features = ["builder", "smtp-transport", "tokio1-rustls-tls"] }
+actix-multipart = "0.6"
+futures-util = "0.3"

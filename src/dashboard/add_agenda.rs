@@ -130,7 +130,7 @@ pub async fn add_agenda(
 
     // ========== INSERT QUERY ==========
     let query = format!(
-        "INSERT INTO kerjasama.agenda (date, time_start, time_end, perundingan, jenis, pembahasan, updated_by, timestamp) \
+        "INSERT INTO db_kerjasama.agenda (date, time_start, time_end, perundingan, jenis, pembahasan, updated_by, timestamp) \
          VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', now())",
         data.date.replace("'", "''"),
         data.time_start.replace("'", "''"),

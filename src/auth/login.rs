@@ -58,7 +58,7 @@ pub async fn login(data: web::Json<LoginRequest>) -> impl Responder {
     }
 
     let query = format!(
-        "SELECT id_user, username, email, fullname, password, role, nip, direktorat, jabatan, status FROM kerjasama.user WHERE username = '{}' FORMAT JSON",
+        "SELECT id_user, username, email, fullname, password, role, nip, direktorat, jabatan, status FROM db_kerjasama.user WHERE username = '{}' FORMAT JSON",
         username.replace("'", "''")
     );
 

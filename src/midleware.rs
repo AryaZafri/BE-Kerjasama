@@ -130,7 +130,7 @@ async fn validate_token(token: &str) -> bool {
     );
 
     let query = format!(
-        "SELECT count() as cnt FROM kerjasama.user WHERE token = '{}' AND status = 1 FORMAT JSON",
+        "SELECT count() as cnt FROM db_kerjasama.user WHERE token = '{}' AND status = 1 FORMAT JSON",
         token.replace("'", "''")
     );
 

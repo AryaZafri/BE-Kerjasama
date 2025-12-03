@@ -308,9 +308,9 @@ pub async fn get_api_with_token(client: Result<Client>, url: &str, json_param: V
 pub async fn get_token_env() -> String {
     let env_status = std::env::var("ENV_STATUS").expect("no environment variable set for \"ENV STATUS\"");
     let token = if env_status == format!("DEPLOY") {
-        get_token_from_txt() //deploy
+        get_token_from_txt()
     } else {
-        get_token_local().await //lokal
+        get_token_local().await
     };
 
     token

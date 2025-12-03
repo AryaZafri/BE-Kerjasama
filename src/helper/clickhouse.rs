@@ -37,7 +37,6 @@ pub async fn query_ch(query_str: String) -> anyhow::Result<Value> {
 
     println!("📥 Response status: {}", status);
 
-    // ✅ Check HTTP status code first
     if !status.is_success() {
         eprintln!("❌ ClickHouse returned error status: {}", status);
         eprintln!("❌ Error response: {}", text);
@@ -49,10 +48,8 @@ pub async fn query_ch(query_str: String) -> anyhow::Result<Value> {
         ));
     }
 
-    // ✅ Try to parse as JSON
     match serde_json::from_str::<Value>(&text) {
         Ok(json) => {
-            // ✅ Check if JSON contains error field (ClickHouse error format)
             if let Some(exception) = json.get("exception") {
                 let error_msg = exception.as_str().unwrap_or("Unknown error");
                 eprintln!("❌ ClickHouse exception: {}", error_msg);
@@ -62,13 +59,11 @@ pub async fn query_ch(query_str: String) -> anyhow::Result<Value> {
             Ok(json)
         }
         Err(_parse_err) => {
-            // ✅ If not JSON, check if it's a plain error message
             if text.contains("Exception") || text.contains("Error") || text.contains("DB::Exception") {
                 eprintln!("❌ ClickHouse error (plain text): {}", text);
                 return Err(anyhow!("ClickHouse error: {}", text));
             }
             
-            // If it's valid non-JSON response (like INSERT success), wrap it
             println!("⚠️  Non-JSON response: {}", text);
             Ok(serde_json::json!({ 
                 "raw": text,
@@ -78,18 +73,15 @@ pub async fn query_ch(query_str: String) -> anyhow::Result<Value> {
     }
 }
 
-// ✅ Optional: Helper function for INSERT/UPDATE queries that don't return JSON
 pub async fn execute_ch(query_str: String) -> anyhow::Result<()> {
     let result = query_ch(query_str).await?;
     
-    // Check if execution was successful
     if let Some(success) = result.get("success") {
         if success.as_bool() == Some(true) {
             return Ok(());
         }
     }
     
-    // If we got JSON data back, that's also success
     if result.get("data").is_some() {
         return Ok(());
     }
@@ -97,7 +89,6 @@ pub async fn execute_ch(query_str: String) -> anyhow::Result<()> {
     Ok(())
 }
 
-// ✅ Optional: Helper function for SELECT queries
 pub async fn query_ch_json(query_str: String) -> anyhow::Result<Vec<Value>> {
     let result = query_ch(query_str).await?;
     
