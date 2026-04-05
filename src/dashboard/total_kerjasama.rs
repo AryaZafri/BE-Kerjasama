@@ -1,7 +1,7 @@
 use actix_web::{HttpResponse, Responder, web};
 use serde_json::{json, Value};
 
-use crate::{map_get, query_ch};
+use crate::{map_get, query_ch, to_i64};
 
 pub async fn total_kerjasama(info: web::Json<Value>) -> impl Responder {
     let param = info.into_inner();
@@ -81,9 +81,7 @@ pub async fn total_kerjasama(info: web::Json<Value>) -> impl Responder {
             .as_str()
             .unwrap_or("")
             .to_owned();
-        let jumlah = map_get("jumlah", item.clone())
-            .as_u64()
-            .unwrap_or(0);
+        let jumlah = to_i64(map_get("jumlah", item.clone())) as u64;
         
         if categories.contains(&cat.as_str()) {
             category_map.insert(cat, jumlah);

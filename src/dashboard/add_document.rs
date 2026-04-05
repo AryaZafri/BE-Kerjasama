@@ -1,55 +1,15 @@
 use actix_multipart::Multipart;
-use actix_web::{HttpRequest, HttpResponse, Responder};
+use actix_web::{HttpResponse, Responder};
 use futures_util::stream::StreamExt as _;
-use jsonwebtoken::{DecodingKey, Validation, decode};
-use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::fs;
 use std::io::Write;
 use std::path::Path;
 use chrono::Local;
 
-use crate::{WebServiceResponse, query_ch};
+use crate::query_ch;
 
-#[derive(Debug, Serialize, Deserialize)]
-struct Claims {
-    sub: i32,
-    username: String,
-    email: String,
-    role: String,
-    exp: usize,
-    iat: usize,
-}
-
-const JWT_SECRET: &str = "your-secret-key-change-in-production";
-
-fn get_user_from_token(req: &HttpRequest) -> Result<Claims, String> {
-    let cookie = req
-        .cookie("auth_token")
-        .ok_or("Token tidak ditemukan. Silakan login terlebih dahulu.")?;
-
-    let token = cookie.value();
-
-    let token_data = decode::<Claims>(
-        token,
-        &DecodingKey::from_secret(JWT_SECRET.as_ref()),
-        &Validation::default(),
-    )
-    .map_err(|e| format!("Token tidak valid: {}", e))?;
-
-    Ok(token_data.claims)
-}
-
-pub async fn add_document(mut payload: Multipart, req: HttpRequest) -> impl Responder {
-    let user = match get_user_from_token(&req) {
-        Ok(u) => u,
-        Err(e) => {
-            return HttpResponse::Unauthorized().json(WebServiceResponse {
-                status: "Error".into(),
-                info: e,
-            });
-        }
-    };
+pub async fn add_document(mut payload: Multipart) -> impl Responder {
 
     let base_path = "/home/app/fe/document";
     
@@ -68,13 +28,14 @@ pub async fn add_document(mut payload: Multipart, req: HttpRequest) -> impl Resp
     let mut jenis = String::new();
     let mut last_update = String::new();
     let mut pembahasan = String::new();
+    let mut uploded_by = String::new();
 
     while let Some(Ok(mut field)) = payload.next().await {
         let content_disposition = field.content_disposition();
         let field_name = content_disposition.get_name().unwrap_or("").to_string();
 
         match field_name.as_str() {
-            "perundingan" | "negara_mitra" | "jenis" | "last_update" | "pembahasan" => {
+            "perundingan" | "negara_mitra" | "jenis" | "last_update" | "pembahasan" | "uploded_by" => {
                 let mut field_data = Vec::new();
                 while let Some(chunk) = field.next().await {
                     let data = match chunk {
@@ -97,6 +58,7 @@ pub async fn add_document(mut payload: Multipart, req: HttpRequest) -> impl Resp
                     "jenis" => jenis = value,
                     "last_update" => last_update = value,
                     "pembahasan" => pembahasan = value,
+                    "uploded_by" => uploded_by = value,
                     _ => {}
                 }
             }
@@ -188,7 +150,7 @@ pub async fn add_document(mut payload: Multipart, req: HttpRequest) -> impl Resp
         last_update.replace("'", "''"),
         pembahasan.replace("'", "''"),
         file_path.replace("'", "''"),
-        user.username.replace("'", "''")
+        uploded_by.replace("'", "''")
     );
 
     match query_ch(query).await {
@@ -201,7 +163,7 @@ pub async fn add_document(mut payload: Multipart, req: HttpRequest) -> impl Resp
                     "file_path": file_path,
                     "perundingan": perundingan,
                     "negara_mitra": negara_mitra,
-                    "uploaded_by": user.username
+                    "uploaded_by": uploded_by
                 }
             }))
         }

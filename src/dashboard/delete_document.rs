@@ -1,6 +1,5 @@
-use actix_web::{web, HttpRequest, HttpResponse, Responder};
-use serde::{Deserialize, Serialize};
-use jsonwebtoken::{decode, DecodingKey, Validation};
+use actix_web::{web, HttpResponse, Responder};
+use serde::Deserialize;
 use serde_json::json;
 use std::fs;
 
@@ -16,48 +15,9 @@ pub struct DeleteDocumentRequest {
     pub document: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-struct Claims {
-    sub: i32,
-    username: String,
-    email: String,
-    role: String,
-    exp: usize,
-    iat: usize,
-}
-
-const JWT_SECRET: &str = "your-secret-key-change-in-production";
-
-fn get_user_from_token(req: &HttpRequest) -> Result<Claims, String> {
-    let cookie = req
-        .cookie("auth_token")
-        .ok_or("Token tidak ditemukan. Silakan login terlebih dahulu.")?;
-
-    let token = cookie.value();
-
-    let token_data = decode::<Claims>(
-        token,
-        &DecodingKey::from_secret(JWT_SECRET.as_ref()),
-        &Validation::default(),
-    )
-    .map_err(|e| format!("Token tidak valid: {}", e))?;
-
-    Ok(token_data.claims)
-}
-
 pub async fn delete_document(
-    req: HttpRequest,
     data: web::Json<DeleteDocumentRequest>,
 ) -> impl Responder {
-    let user = match get_user_from_token(&req) {
-        Ok(u) => u,
-        Err(e) => {
-            return HttpResponse::Unauthorized().json(WebServiceResponse {
-                status: "Error".into(),
-                info: e,
-            });
-        }
-    };
 
     // ========== VALIDASI ==========
     if data.perundingan.is_empty() {
@@ -160,8 +120,6 @@ pub async fn delete_document(
     println!("   Last Update: {}", data.last_update);
     println!("   Pembahasan: {}", data.pembahasan);
     println!("   Document Path: {}", data.document);
-    println!("   Deleted by: {}", user.username);
-
     match query_ch(query).await {
         Ok(_) => {
             // Hapus file fisik jika ada
@@ -184,7 +142,7 @@ pub async fn delete_document(
                     "last_update": data.last_update,
                     "pembahasan": data.pembahasan,
                     "document": data.document,
-                    "deleted_by": user.username
+                    "deleted_by": ""
                 }
             }))
         }
