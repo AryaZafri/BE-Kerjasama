@@ -11,7 +11,7 @@ use crate::query_ch;
 
 pub async fn add_document(mut payload: Multipart) -> impl Responder {
 
-    let base_path = "/home/app/fe/document";
+    let base_path = "/home/adminagro/fe/document";
     
     if let Err(e) = fs::create_dir_all(base_path) {
         return HttpResponse::InternalServerError().json(json!({
